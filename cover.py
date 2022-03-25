@@ -1,78 +1,45 @@
-"""Platform for light integration."""
+"""Platform for sensor integration."""
 from __future__ import annotations
 
-import voluptuous as vol
+from typing import Any
 
-import logging
-
-
-# Import the device class from the component that you want to support
-import homeassistant.helpers.config_validation as cv
+# These constants are relevant to the type of entity we are using.
+# See below for how they are used.
 from homeassistant.components.cover import (
 	ATTR_POSITION,
 	SUPPORT_CLOSE,
 	SUPPORT_OPEN,
 	SUPPORT_STOP,
-	PLATFORM_SCHEMA,
 	DEVICE_CLASS_WINDOW,
 	CoverEntity,
 )
-from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_NAME
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
+
+from .const import DOMAIN
 import asyncio
 import time
 
-from viam.rpc.dial import Credentials, DialOptions, dial_direct
-from viam.proto.api.service.metadata import (
-	MetadataServiceStub,
-	ResourcesRequest
-)
 from viam.components.motor import MotorClient
 
-
-_LOGGER = logging.getLogger(__name__)
-
-# Validation of the user's configuration
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-	vol.Required(CONF_HOST): cv.string,
-	vol.Required(CONF_PASSWORD): cv.string,
-	vol.Required(CONF_NAME): cv.string,
-})
-
-
-def setup_platform(
+# This function is called as part of the __init__.async_setup_entry (via the
+# hass.config_entries.async_forward_entry_setup call)
+async def async_setup_entry(
 	hass: HomeAssistant,
-	config: ConfigType,
-	add_entities: AddEntitiesCallback,
-	discovery_info: DiscoveryInfoType | None = None
+	config_entry: ConfigEntry,
+	async_add_entities: AddEntitiesCallback,
 ) -> None:
-	# Assign configuration variables.
-	# The configuration check takes care they are present.
-	uri = config[CONF_HOST]
-	secret = config[CONF_PASSWORD]
-	nameString = config[CONF_NAME]
-	motorNames = nameString.split()
+	"""Add cover for passed config_entry in HA."""
+	# The hub is loaded from the associated hass.data entry that was created in the
+	# __init__.async_setup_entry function
+	hub = hass.data[DOMAIN][config_entry.entry_id]
+	motorNames = await hub.get_motor_names()
+	print(motorNames)
 
-	# Verify that passed in configuration works
-	if len(motorNames) == 0:
-		_LOGGER.error("got no motors")
-		return
-
-	# Add devices
-	add_entities(ViamWindowOpener(secret, uri, motorName) for motorName in motorNames)
-
-async def setup_viam_conn(secret, uri):
-	creds = Credentials(
-		type="robot-location-secret",
-		payload=secret)
-	opts = DialOptions(	
-		credentials=creds
-	)
-	channel = await dial_direct(uri, opts)
-	return channel
+	# Add all entities to HA
+	async_add_entities(ViamWindowOpener(hub, motorName) for motorName in motorNames)
 
 
 class ViamWindowOpener(CoverEntity):
@@ -83,18 +50,33 @@ class ViamWindowOpener(CoverEntity):
 	# device it connected to), then this should be function with an @property decorator.
 	supported_features = SUPPORT_OPEN | SUPPORT_CLOSE | SUPPORT_STOP
 
-	def __init__(self, secret, uri, motorName) -> None:
+	def __init__(self, hub, motorName) -> None:
 		self._name = motorName
-		self._uri = uri
-		self._secret = secret
+		self.hub = hub
 		self._moving = 0
 		self._closed = False
-		#asyncio.run(self.async_close_cover())
+
+		self._attr_unique_id = f"{self._name}_cover"
+
+		# This is the name for this *entity*, the "name" attribute from "device_info"
+		# is used as the device name for device screens in the UI. This name is used on
+		# entity screens, and used to build the Entity ID that's used is automations etc.
+		self._attr_name = self._name
+
 
 	@property
 	def name(self) -> str:
 		"""Return the display name of this motor."""
 		return self._name
+	
+	@property
+	def device_info(self) -> DeviceInfo:
+		"""Information about this entity/device."""
+		return {
+			"identifiers": {(DOMAIN, self._name)},
+			# If desired, the name for the device could be different to the entity
+			"name": self._name,
+		}
 
 	# This property is important to let HA know if this entity is online or not.
 	# If an entity is offline (return False), the UI will refelect this.
@@ -131,39 +113,39 @@ class ViamWindowOpener(CoverEntity):
 	async def async_open_cover(self, **kwargs: Any) -> None:
 		"""Open the cover."""
 		await self.async_start_opening()
-		#await asyncio.sleep(65)
-		#await self.async_stop_cover()
+		await asyncio.sleep(15)
+		await self.async_stop_cover()
 		self._closed = False
 
 	async def async_close_cover(self, **kwargs: Any) -> None:
 		"""Close the cover."""
 		await self.async_start_closing()
-		#await asyncio.sleep(70)
-		#await self.async_stop_cover()
+		await asyncio.sleep(20)
+		await self.async_stop_cover()
 		self._closed = True
-
 
 	async def async_stop_cover(self, **kwargs):
 		"""Stop the cover."""
-		channel = await setup_viam_conn(self._secret, self._uri)
+		channel = await self.hub.setup_viam_conn()
 		motor = MotorClient(name=self._name, channel=channel)
 		await motor.set_power(0)
 		channel.close()
 		self._moving = 0
 
-	async def async_start_opening(self, **kwargs: Any) -> None:
+	async def async_start_opening(self) -> None:
 		"""Close the cover."""
-		channel = await setup_viam_conn(self._secret, self._uri)
+		channel = await self.hub.setup_viam_conn()
 		motor = MotorClient(name=self._name, channel=channel)
 		await motor.set_power(1.0)
 		channel.close()
 		self._closed = False
 		self._moving = 1
 
-	async def async_start_closing(self, **kwargs: Any) -> None:
+	async def async_start_closing(self) -> None:
 		"""Close the cover."""
-		channel = await setup_viam_conn(self._secret, self._uri)
+		channel = await self.hub.setup_viam_conn()
 		motor = MotorClient(name=self._name, channel=channel)
 		await motor.set_power(-1.0)
 		channel.close()
 		self._moving = -1
+

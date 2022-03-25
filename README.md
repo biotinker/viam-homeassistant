@@ -1,22 +1,11 @@
-# Awesome Lights
+# More "Level 2" Comprehensive async Push Integration Example
 
-This integration shows how you would go ahead and integrate a physical light into Home Assistant.
+This example aims to show the best practice for a more complete integration using **push** with async.
 
-If you use this integration as a template, make sure you tweak the following places:
+It is based on a _cover_, emulating battery operated roller blinds.
 
- - `manifest.json`: update the requirements to point at your Python library
- - `light.py`: update the code to interact with your library
+The example includes extensive comments (that should be removed if making a true integration), to guide you through what each field and property is for. It includes 2 sensors tied to the primary cover device.
 
-### Installation
+It's all implemented using a _push_ model in _async_.
 
-Copy this folder to `<config_dir>/custom_components/example_light/`.
-
-Add the following entry in your `configuration.yaml`:
-
-```yaml
-light:
-  - platform: awesome_lights
-    host: HOST_HERE
-    username: USERNAME_HERE
-    password: PASSWORD_HERE_OR_secrets.yaml
-```
+This example does not cover translations.
