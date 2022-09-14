@@ -12,6 +12,17 @@ from homeassistant.components.cover import (
 	SUPPORT_STOP,
 	DEVICE_CLASS_WINDOW,
 	CoverEntity,
+	CoverEntityFeature,
+)
+from homeassistant.const import (
+    CONF_DEVICE_CLASS,
+    CONF_NAME,
+    CONF_OPTIMISTIC,
+    CONF_VALUE_TEMPLATE,
+    STATE_CLOSED,
+    STATE_CLOSING,
+    STATE_OPEN,
+    STATE_OPENING,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -55,6 +66,7 @@ class ViamWindowOpener(CoverEntity):
 		self.hub = hub
 		self._moving = 0
 		self._closed = False
+		self._state = None
 
 		self._attr_unique_id = f"{self._name}_cover"
 
@@ -63,6 +75,10 @@ class ViamWindowOpener(CoverEntity):
 		# entity screens, and used to build the Entity ID that's used is automations etc.
 		self._attr_name = self._name
 
+	@property
+	def assumed_state(self) -> bool:
+		"""Return true if we do optimistic updates."""
+		return True
 
 	@property
 	def name(self) -> str:
@@ -83,7 +99,8 @@ class ViamWindowOpener(CoverEntity):
 	@property
 	def available(self) -> bool:
 		"""Return True if roller and hub is available."""
-		return True
+		return self.hub.test_connection()
+	
 	# The following properties are how HA knows the current state of the device.
 	# These must return a value from memory, not make a live query to the device/hub
 	# etc when called (hence they are properties). For a push based integration,
@@ -113,16 +130,18 @@ class ViamWindowOpener(CoverEntity):
 	async def async_open_cover(self, **kwargs: Any) -> None:
 		"""Open the cover."""
 		await self.async_start_opening()
-		await asyncio.sleep(15)
+		await asyncio.sleep(40)
 		await self.async_stop_cover()
 		self._closed = False
+		self._state = STATE_OPEN
 
 	async def async_close_cover(self, **kwargs: Any) -> None:
 		"""Close the cover."""
 		await self.async_start_closing()
-		await asyncio.sleep(20)
+		await asyncio.sleep(50)
 		await self.async_stop_cover()
 		self._closed = True
+		self._state = STATE_CLOSED
 
 	async def async_stop_cover(self, **kwargs):
 		"""Stop the cover."""
@@ -139,6 +158,7 @@ class ViamWindowOpener(CoverEntity):
 		await motor.set_power(1.0)
 		channel.close()
 		self._closed = False
+		self._state = STATE_OPEN
 		self._moving = 1
 
 	async def async_start_closing(self) -> None:

@@ -29,7 +29,7 @@ class Hub:
 		self._id = self._host.lower()
 		self._secret = secret
 
-		self.online = True
+		self.online = self.test_connection()
 
 	@property
 	def hub_id(self) -> str:
