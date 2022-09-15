@@ -1,14 +1,19 @@
 {
-  "domain": "viam_window",
-  "name": "Viam Window",
+  "domain": "viam",
+  "name": "Viam",
   "config_flow": true,
-  "documentation": "https://www.home-assistant.io/integrations/detailed_hello_world_push",
-  "requirements": [],
+  "documentation": "https://github.com/JoeKarlsson/viam-homeassistant",
+  "requirements": [
+    "git+https://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@github.com/viamrobotics/python-sdk.git"
+  ],
   "ssdp": [],
   "zeroconf": [],
   "homekit": {},
   "dependencies": [],
-  "codeowners": ["@sillyfrog"],
+  "codeowners": [
+    "@JoeKarlsson",
+    "ViamRobotics"
+  ],
   "iot_class": "local_polling",
   "version": "0.1.0"
 }
