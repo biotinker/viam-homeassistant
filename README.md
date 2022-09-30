@@ -13,6 +13,8 @@ There currently is support for the Cover device type within Home Assistant.
 
 Currently this component will connect to a robot that has some number of motors configured, and will attempt to create a cover from each one. Continuously running motors (fans) and sensors are not yet supported.
 
+This is an unofficial integration and is not officially supported by Viam, Inc (but I try to keep it up to date)
+
 ## Installation
 
 ### From HACS
