@@ -10,11 +10,8 @@ import asyncio
 import random
 
 from homeassistant.core import HomeAssistant
+from viam.robot.client import RobotClient
 from viam.rpc.dial import Credentials, DialOptions, dial_direct
-from viam.proto.api.service.metadata import (
-	MetadataServiceStub,
-	ResourcesRequest
-)
 
 
 class Hub:
@@ -38,27 +35,22 @@ class Hub:
 
 	async def test_connection(self) -> bool:
 		"""Test connectivity to the Dummy hub is OK."""
-		channel = await self.setup_viam_conn()
-		service = MetadataServiceStub(channel)
-		request = ResourcesRequest()
-		response = await service.Resources(request)
-		channel.close()
-		if len(response.resources) == 0:
+		robot = await self.setup_viam_conn()
+		if len(robot.resource_names) == 0:
+			await robot.close()
 			return False
+		await robot.close()
 		return True
 
 	async def get_motor_names(self):
 		"""Test connectivity to the Dummy hub is OK."""
-		channel = await self.setup_viam_conn()
-		service = MetadataServiceStub(channel)
-		request = ResourcesRequest()
-		response = await service.Resources(request)
-		channel.close()
+		robot = await self.setup_viam_conn()
 		motorNames = []
-		for resource in response.resources:
+		for resource in robot.resource_names:
 			if resource.type == "component":
 				if resource.subtype == "motor":
 					motorNames.append(resource.name)
+		await robot.close()
 		return motorNames
 
 
@@ -66,9 +58,9 @@ class Hub:
 		creds = Credentials(
 			type="robot-location-secret",
 			payload=self._secret)
-		opts = DialOptions(	
-			credentials=creds
+		opts = RobotClient.Options(
+			refresh_interval=0,
+			dial_options=DialOptions(credentials=creds)
 		)
-		channel = await dial_direct(self._host, opts)
-		return channel
+		return await RobotClient.at_address(self._host, opts)
 
