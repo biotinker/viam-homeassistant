@@ -2,17 +2,17 @@
   "domain": "viam",
   "name": "Viam",
   "config_flow": true,
-  "documentation": "https://github.com/JoeKarlsson/viam-homeassistant",
+  "documentation": "https://github.com/biotinker/viam-homeassistant",
   "requirements": [
-    "git+https://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@github.com/viamrobotics/python-sdk.git"
+    "git+https://@github.com/viamrobotics/python-sdk.git"
   ],
   "ssdp": [],
   "zeroconf": [],
   "homekit": {},
   "dependencies": [],
   "codeowners": [
-    "@JoeKarlsson",
-    "ViamRobotics"
+    "@biotinker",
+    "@JoeKarlsson"
   ],
   "iot_class": "local_polling",
   "version": "0.1.0"
