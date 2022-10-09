@@ -4,7 +4,7 @@
   "config_flow": true,
   "documentation": "https://github.com/biotinker/viam-homeassistant",
   "requirements": [
-    "git+https://github.com/viamrobotics/viam-python-sdk.git@main"
+    "viam-sdk"
   ],
   "ssdp": [],
   "zeroconf": [],
