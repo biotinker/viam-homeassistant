@@ -1,10 +1,10 @@
 {
-  "domain": "viam",
+  "domain": "viam-homeassistant",
   "name": "Viam",
   "config_flow": true,
   "documentation": "https://github.com/biotinker/viam-homeassistant",
   "requirements": [
-    "github.com/viamrobotics/python-sdk"
+    "viam-sdk"
   ],
   "ssdp": [],
   "zeroconf": [],
