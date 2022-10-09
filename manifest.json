@@ -1,5 +1,5 @@
 {
-  "domain": "viam",
+  "domain": "viam-homeassistant",
   "name": "Viam",
   "config_flow": true,
   "documentation": "https://github.com/biotinker/viam-homeassistant",
