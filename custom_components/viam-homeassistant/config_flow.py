@@ -14,20 +14,9 @@ from .hub import Hub
 
 _LOGGER = logging.getLogger(__name__)
 
-# This is the schema that used to display the UI to the user. This simple
-# schema has a single required host field, but it could include a number of fields
-# such as username, password etc. See other components in the HA core code for
-# further examples.
-# Note the input displayed to the user will be translated. See the
-# translations/<lang>.json file and strings.json. See here for further information:
-# https://developers.home-assistant.io/docs/config_entries_config_flow_handler/#translations
-# At the time of writing I found the translations created by the scaffold didn't
-# quite work as documented and always gave me the "Lokalise key references" string
-# (in square brackets), rather than the actual translated value. I did not attempt to
-# figure this out or look further into it.
 DATA_SCHEMA = vol.Schema({("host"): str, ("password"): str})
 
-
+# TODO(pl): This is all wrong and should be much better
 async def validate_input(hass: HomeAssistant, data: dict) -> dict[str, Any]:
     """Validate the user input allows us to connect.
 
@@ -41,8 +30,6 @@ async def validate_input(hass: HomeAssistant, data: dict) -> dict[str, Any]:
     if len(data["host"]) < 3:
         raise InvalidHost
 
-    print("data!!!")
-    print(data)
     hub = Hub(hass, data["host"], data["password"])
     # The dummy hub provides a `test_connection` method to ensure it's working
     # as expected

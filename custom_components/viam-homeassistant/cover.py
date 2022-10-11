@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from typing import Any
+import threading
 
 # These constants are relevant to the type of entity we are using.
 # See below for how they are used.
@@ -46,11 +47,21 @@ async def async_setup_entry(
 	# __init__.async_setup_entry function
 	hub = hass.data[DOMAIN][config_entry.entry_id]
 	motorNames = await hub.get_motor_names()
-	print(motorNames)
 
 	# Add all entities to HA
 	async_add_entities(ViamWindowOpener(hub, motorName) for motorName in motorNames)
 
+# This is how we get @properties from async functions
+class RunThread(threading.Thread):
+	def __init__(self, func, args, kwargs):
+		self.func = func
+		self.args = args
+		self.kwargs = kwargs
+		self.result = None
+		super().__init__()
+
+	def run(self):
+		self.result = asyncio.run(self.func(*self.args, **self.kwargs))
 
 class ViamWindowOpener(CoverEntity):
 	device_class = DEVICE_CLASS_WINDOW
@@ -95,11 +106,22 @@ class ViamWindowOpener(CoverEntity):
 
 	# This property is important to let HA know if this entity is online or not.
 	# If an entity is offline (return False), the UI will refelect this.
-	# ~ @property
-	# ~ def available(self) -> bool:
-		# ~ """Return True if roller and hub is available."""
-		# ~ return True
-		# ~ #return self.hub.test_connection()
+	@property
+	def available(self, *args, **kwargs) -> bool:
+		"""Return True if hub is available."""
+		try:
+			loop = asyncio.get_running_loop()
+		except RuntimeError:  # 'RuntimeError: There is no current event loop...'
+			loop = None
+
+		if loop and loop.is_running():
+			if loop and loop.is_running():
+				thread = RunThread(self.hub.test_connection, args, kwargs)
+				thread.start()
+				thread.join()
+				return thread.result
+		else:
+			return asyncio.run(self.hub.test_connection())
 	
 	# The following properties are how HA knows the current state of the device.
 	# These must return a value from memory, not make a live query to the device/hub

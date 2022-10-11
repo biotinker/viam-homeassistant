@@ -25,8 +25,12 @@ class Hub:
 		self._hass = hass
 		self._id = self._host.lower()
 		self._secret = secret
+		# ~ self.online = True
 
-		self.online = self.test_connection()
+
+	@property
+	def online(self) -> bool:
+		return asyncio.run(self.test_connection())
 
 	@property
 	def hub_id(self) -> str:
@@ -43,7 +47,6 @@ class Hub:
 		return True
 
 	async def get_motor_names(self):
-		"""Test connectivity to the Dummy hub is OK."""
 		robot = await self.setup_viam_conn()
 		motorNames = []
 		for resource in robot.resource_names:
@@ -52,7 +55,6 @@ class Hub:
 					motorNames.append(resource.name)
 		await robot.close()
 		return motorNames
-
 
 	async def setup_viam_conn(self):
 		creds = Credentials(
