@@ -49,21 +49,10 @@ async def async_setup_entry(
 	motorNames = await hub.get_motor_names()
 
 	# Add all entities to HA
-	async_add_entities(ViamWindowOpener(hub, motorName) for motorName in motorNames)
+	# For now, we just assume one motor = one cover
+	async_add_entities(ViamCover(hub, motorName) for motorName in motorNames)
 
-# This is how we get @properties from async functions
-class RunThread(threading.Thread):
-	def __init__(self, func, args, kwargs):
-		self.func = func
-		self.args = args
-		self.kwargs = kwargs
-		self.result = None
-		super().__init__()
-
-	def run(self):
-		self.result = asyncio.run(self.func(*self.args, **self.kwargs))
-
-class ViamWindowOpener(CoverEntity):
+class ViamCover(CoverEntity):
 	device_class = DEVICE_CLASS_WINDOW
 	# The supported features of a cover are done using a bitmask. Using the constants
 	# imported above, we can tell HA the features that are supported by this entity.
@@ -109,19 +98,7 @@ class ViamWindowOpener(CoverEntity):
 	@property
 	def available(self, *args, **kwargs) -> bool:
 		"""Return True if hub is available."""
-		try:
-			loop = asyncio.get_running_loop()
-		except RuntimeError:  # 'RuntimeError: There is no current event loop...'
-			loop = None
-
-		if loop and loop.is_running():
-			if loop and loop.is_running():
-				thread = RunThread(self.hub.test_connection, args, kwargs)
-				thread.start()
-				thread.join()
-				return thread.result
-		else:
-			return asyncio.run(self.hub.test_connection())
+		return self.hub.online
 	
 	# The following properties are how HA knows the current state of the device.
 	# These must return a value from memory, not make a live query to the device/hub
@@ -159,26 +136,29 @@ class ViamWindowOpener(CoverEntity):
 
 	async def async_stop_cover(self, **kwargs):
 		"""Stop the cover."""
-		robot = await self.hub.setup_viam_conn()
-		motor = MotorClient(name=self._name, channel=robot._channel)
-		await motor.stop()
-		await robot.close()
-		self._moving = 0
+		if self.available:
+			robot = await self.hub.setup_viam_conn()
+			motor = MotorClient(name=self._name, channel=robot._channel)
+			await motor.stop()
+			await robot.close()
+			self._moving = 0
 
 	async def do_open(self, **kwargs: Any) -> None:
 		"""Open the cover."""
-		robot = await self.hub.setup_viam_conn()
-		motor = MotorClient(name=self._name, channel=robot._channel)
-		await motor.go_for(rpm= 60, revolutions= 70)
-		await robot.close()
-		self._closed = False
-		self._state = STATE_OPEN
+		if self.available:
+			robot = await self.hub.setup_viam_conn()
+			motor = MotorClient(name=self._name, channel=robot._channel)
+			await motor.go_for(rpm= 60, revolutions= 70)
+			await robot.close()
+			self._closed = False
+			self._state = STATE_OPEN
 
 	async def do_close(self, **kwargs: Any) -> None:
 		"""Close the cover."""
-		robot = await self.hub.setup_viam_conn()
-		motor = MotorClient(name=self._name, channel=robot._channel)
-		await motor.go_for(rpm= 60, revolutions= -90)
-		await robot.close()
-		self._closed = True
-		self._state = STATE_CLOSED
+		if self.available:
+			robot = await self.hub.setup_viam_conn()
+			motor = MotorClient(name=self._name, channel=robot._channel)
+			await motor.go_for(rpm= 60, revolutions= -90)
+			await robot.close()
+			self._closed = True
+			self._state = STATE_CLOSED
