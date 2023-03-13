@@ -140,7 +140,6 @@ class ViamCover(CoverEntity):
 			robot = await self.hub.setup_viam_conn()
 			motor = MotorClient(name=self._name, channel=robot._channel)
 			await motor.stop()
-			await robot.close()
 			self._moving = 0
 
 	async def do_open(self, **kwargs: Any) -> None:
@@ -149,7 +148,6 @@ class ViamCover(CoverEntity):
 			robot = await self.hub.setup_viam_conn()
 			motor = MotorClient(name=self._name, channel=robot._channel)
 			await motor.go_for(rpm= 60, revolutions= 70)
-			await robot.close()
 			self._closed = False
 			self._state = STATE_OPEN
 
@@ -159,6 +157,5 @@ class ViamCover(CoverEntity):
 			robot = await self.hub.setup_viam_conn()
 			motor = MotorClient(name=self._name, channel=robot._channel)
 			await motor.go_for(rpm= 60, revolutions= -90)
-			await robot.close()
 			self._closed = True
 			self._state = STATE_CLOSED

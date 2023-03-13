@@ -5,7 +5,6 @@ from __future__ import annotations
 # The PyPI package needs to be included in the `requirements` section of manifest.json
 # See https://developers.home-assistant.io/docs/creating_integration_manifest
 # for more information.
-# This dummy hub always returns 3 rollers.
 import asyncio
 import async_timeout
 import random
@@ -20,7 +19,7 @@ from viam import logging
 LOGGER = logging.getLogger(__name__)
 
 class Hub:
-	"""Dummy hub for Hello World example."""
+	"""Viam communication hub"""
 
 	manufacturer = "Demonstration Corp"
 
@@ -29,7 +28,7 @@ class Hub:
 		host: str,
 		secret: str,
 	) -> None:
-		"""Init dummy hub."""
+		"""Init viam hub."""
 		self._host = host
 		self._hass = hass
 		self._id = self._host.lower()
@@ -46,10 +45,11 @@ class Hub:
 		self._wait_task: Optional[asyncio.Task[None]] = None
 		self._wait_task_lock = asyncio.Lock()
 		self._log_name = self._id
+		self._robot = None
 
 	@property
 	def hub_id(self) -> str:
-		"""ID for dummy hub."""
+		"""ID for viam hub."""
 		return self._id
 
 	@property
@@ -57,12 +57,18 @@ class Hub:
 		return self._connected
 
 	async def test_connection(self) -> bool:
-		"""Test connectivity to the Dummy hub is OK."""
+		"""Test connectivity to the Viam hub is OK."""
 		try: 
 			robot = await self.setup_viam_conn()
 			if robot is not None:
-				await robot.close()
-				return True
+				try:
+					status = await robot.get_status()
+					if len(status) > 0:
+						return True
+					return False
+				except:
+					self._robot = None
+					return False
 			return False
 		except:
 			return False
@@ -74,11 +80,12 @@ class Hub:
 			if resource.type == "component":
 				if resource.subtype == "motor":
 					motorNames.append(resource.name)
-		await robot.close()
 		return motorNames
 	
 
 	async def setup_viam_conn(self):
+		if self._robot is not None:
+			return self._robot
 		creds = Credentials(
 			type="robot-location-secret",
 			payload=self._secret)
@@ -89,6 +96,7 @@ class Hub:
 		
 		try:
 			r =  await RobotClient.at_address( self._host, opts)
+			self._robot = r
 			return r
 		except Exception as exc:
 			print(f'The coroutine raised an exception: {exc!r}')
