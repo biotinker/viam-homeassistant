@@ -7,18 +7,18 @@ from homeassistant.core import HomeAssistant
 from . import hub
 from .const import DOMAIN
 
-from homeassistant.const import CONF_HOST, CONF_PASSWORD
+from homeassistant.const import CONF_HOST, CONF_ID, CONF_API_KEY
 
 # List of platforms to support. There should be a matching .py file for each,
 # eg <cover.py> and <sensor.py>
-PLATFORMS: list[str] = ["cover"]
+PLATFORMS: list[str] = ["cover", "sensor"]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Hello World from a config entry."""
     # Store an instance of the "connecting" class that does the work of speaking
     # with your actual devices.
-    thisHub = hub.Hub(hass, entry.data[CONF_HOST], entry.data[CONF_PASSWORD])
+    thisHub = hub.Hub(hass, entry.data[CONF_HOST], entry.data[CONF_ID], entry.data[CONF_API_KEY])
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = thisHub
     await thisHub.start()
 

@@ -2,10 +2,13 @@
   "config": {
     "step": {
       "user": {
+        "title": "Viam Connection Setup",
+        "description": "Enter your hostname, api key id, and api key",
         "data": {
-          "host": "[%key:common::config_flow::data::host%]",
-          "name": "[%key:common::config_flow::data::name%]",
-          "password": "[%key:common::config_flow::data::password%]"
+          "host": "Hostname",
+          "name": "Name",
+          "id": "API Key ID",
+          "api_key": "API Key"
         }
       }
     },

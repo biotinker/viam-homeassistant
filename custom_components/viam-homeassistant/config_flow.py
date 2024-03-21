@@ -8,13 +8,16 @@ import voluptuous as vol
 
 from homeassistant import config_entries, exceptions
 from homeassistant.core import HomeAssistant
+from homeassistant.const import CONF_API_KEY, CONF_HOST, CONF_ID
 
 from .const import DOMAIN  # pylint:disable=unused-import
 from .hub import Hub
 
 _LOGGER = logging.getLogger(__name__)
 
-DATA_SCHEMA = vol.Schema({("host"): str, ("password"): str})
+DATA_SCHEMA = vol.Schema(
+    {vol.Required(CONF_HOST): str, vol.Required(CONF_ID): str, vol.Required(CONF_API_KEY): str}
+)
 
 # TODO(pl): This is all wrong and should be much better
 async def validate_input(hass: HomeAssistant, data: dict) -> dict[str, Any]:
@@ -27,10 +30,10 @@ async def validate_input(hass: HomeAssistant, data: dict) -> dict[str, Any]:
     # This is a simple example to show an error in the UI for a short hostname
     # The exceptions are defined at the end of this file, and are used in the
     # `async_step_user` method below.
-    if len(data["host"]) < 3:
+    if len(data[CONF_HOST]) < 3:
         raise InvalidHost
 
-    hub = Hub(hass, data["host"], data["password"])
+    hub = Hub(hass, data[CONF_HOST], data[CONF_ID], data[CONF_API_KEY])
     # The dummy hub provides a `test_connection` method to ensure it's working
     # as expected
     result = await hub.test_connection()
@@ -54,7 +57,7 @@ async def validate_input(hass: HomeAssistant, data: dict) -> dict[str, Any]:
     # "Title" is what is displayed to the user for this hub device
     # It is stored internally in HA as part of the device config.
     # See `async_step_user` below for how this is used
-    return {"title": data["host"]}
+    return {"title": data[CONF_HOST]}
 
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -88,7 +91,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 # This example does not currently cover translations, see the
                 # comments on `DATA_SCHEMA` for further details.
                 # Set the error on the `host` field, not the entire form.
-                errors["host"] = "cannot_connect"
+                errors[CONF_HOST] = "cannot_connect"
             except Exception:  # pylint: disable=broad-except
                 _LOGGER.exception("Unexpected exception")
                 errors["base"] = "unknown"

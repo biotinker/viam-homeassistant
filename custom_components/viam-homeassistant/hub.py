@@ -9,7 +9,6 @@ import asyncio
 import async_timeout
 import random
 import concurrent.futures
-from syncer import sync
 
 from homeassistant.core import HomeAssistant
 from viam.robot.client import RobotClient
@@ -19,20 +18,20 @@ from viam import logging
 LOGGER = logging.getLogger(__name__)
 
 class Hub:
-	"""Viam communication hub"""
 
 	manufacturer = "Demonstration Corp"
 
 	def __init__(self,
 		hass: HomeAssistant,
 		host: str,
-		secret: str,
+		api_key_id: str,
+		api_key: str,
 	) -> None:
-		"""Init viam hub."""
 		self._host = host
 		self._hass = hass
 		self._id = self._host.lower()
-		self._secret = secret
+		self._api_key_id = api_key_id
+		self._api_key = api_key
 		# The task containing the infinite reconnect loop while running
 		self._loop_every = 20.0 # Check if we can connect every this many seconds
 		self._timeout = 45.0 # Fail if we don't connect in this many seconds
@@ -49,7 +48,6 @@ class Hub:
 
 	@property
 	def hub_id(self) -> str:
-		"""ID for viam hub."""
 		return self._id
 
 	@property
@@ -57,7 +55,7 @@ class Hub:
 		return self._connected
 
 	async def test_connection(self) -> bool:
-		"""Test connectivity to the Viam hub is OK."""
+		"""Test connectivity to the hub is OK."""
 		try: 
 			robot = await self.setup_viam_conn()
 			if robot is not None:
@@ -65,12 +63,17 @@ class Hub:
 					status = await robot.get_status()
 					if len(status) > 0:
 						return True
+						LOGGER.warn("all good")
 					return False
+					LOGGER.warn("zero status")
 				except:
 					self._robot = None
+					LOGGER.warn("test conn except 1")
 					return False
+			LOGGER.warn("none robot")
 			return False
 		except:
+			LOGGER.warn("test conn except2")
 			return False
 
 	async def get_motor_names(self):
@@ -81,26 +84,37 @@ class Hub:
 				if resource.subtype == "motor":
 					motorNames.append(resource.name)
 		return motorNames
+
+	async def get_sensor_names(self):
+		robot = await self.setup_viam_conn()
+		sensorNames = []
+		for resource in robot.resource_names:
+			if resource.type == "component":
+				if resource.subtype == "sensor":
+					sensorNames.append(resource.name)
+		return sensorNames
 	
 
 	async def setup_viam_conn(self):
+		LOGGER.warn("attempting connect")
 		if self._robot is not None:
+			LOGGER.warn("return cache")
 			return self._robot
-		creds = Credentials(
-			type="robot-location-secret",
-			payload=self._secret)
-		opts = RobotClient.Options(
-			refresh_interval=0,
-			dial_options=DialOptions(credentials=creds)
+		opts = RobotClient.Options.with_api_key(
+			api_key=self._api_key,
+			api_key_id=self._api_key_id
 		)
-		
 		try:
+			LOGGER.warn("attempting connect to host %s", self._host)
 			r =  await RobotClient.at_address( self._host, opts)
 			self._robot = r
+			LOGGER.warn("got robot")
 			return r
 		except Exception as exc:
+			LOGGER.error("excepted! %s", exc)
+			LOGGER.error(f'The coroutine raised an exception: {exc!r}')
 			print(f'The coroutine raised an exception: {exc!r}')
-		
+		LOGGER.warn("none after connect")
 		return None
 
 	async def start(self) -> None:
