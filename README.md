@@ -7,11 +7,25 @@
 
 This is a _Custom Integration_ for [Home Assistant](https://www.home-assistant.io/).It uses the [Viam Python SDK](python.viam.dev/) to control and monitor your robots with Home Assistant.
 
-There currently is support for the Cover device type within Home Assistant.
+There currently is support for Cover and Sensor device type within Home Assistant.
 
 ### Currently supported features
 
-Currently this component will connect to a robot that has some number of motors configured, and will attempt to create a cover from each one. Continuously running motors (fans) and sensors are not yet supported.
+Currently this component will connect to a robot that has some number of motors or sensors configured.
+
+For motors: it will attempt to create a cover from each one. Continuously running motors (fans) are not yet supported.
+
+For sensors: it will create one Homeassistant sensor per sensor. Sensor readings are stored in that sensor's `attributes`. In order to create a sensor for an individual value from your sensor readings, you must create a `template` sensor in your `sensors.yaml` and generate your own unique id. Example follows:
+
+```
+- platform: template
+  sensors:
+    feed_scale:
+      friendly_name: Chicken Feed Scale
+      unit_of_measurement: "kg"
+      unique_id: this_must_be_unique
+      value_template: '{{ states.sensor.feedscale.attributes.mass_kg }}'
+```
 
 This is an unofficial integration and is not officially supported by Viam, Inc (but I try to keep it up to date)
 
