@@ -31,6 +31,10 @@ This is an unofficial integration and is not officially supported by Viam, Inc (
 
 ## Installation
 
+Note: Home Assistant OS runs on Alpine Linux, which is based on `musl` as a replacement for `libc`. This means that python packages which include pre-compiled code (such as the Viam SDK) must be compiled specifically for `musl`. Unfortunately, due to [limitations with github actions](https://github.com/actions/runner/issues/801), it's currently very difficult to set up automated creation of `musl` builds for the `aarch64` architecture. For this reason, `musl` is limited to `x86_64` only for now.
+
+If you do not use Homeassistant OS and instead run Homeassistant standalone on a more mainstream Linux distribution, `aarch64` should work fine for you.
+
 ### From HACS
 
 1. Install HACS if you haven't already (see [installation guide](https://hacs.netlify.com/docs/installation/manual)).
