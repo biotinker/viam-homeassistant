@@ -60,13 +60,15 @@ class Hub:
 			robot = await self.setup_viam_conn()
 			if robot is not None:
 				try:
-					status = await robot.get_status()
-					if len(status) > 0:
+					status = await asyncio.wait_for(self._robot.get_machine_status(), timeout=10)
+					if len(status.resources) > 0:
 						return True
-						LOGGER.warn("all good")
+					await robot.close()
+					self._robot = None
 					return False
-					LOGGER.warn("zero status")
-				except:
+				except Exception as exc:
+					await robot.close()
+					LOGGER.error("test conn excepted! %s", exc)
 					self._robot = None
 					LOGGER.warn("test conn except 1")
 					return False
@@ -96,24 +98,30 @@ class Hub:
 	
 
 	async def setup_viam_conn(self):
-		LOGGER.warn("attempting connect")
 		if self._robot is not None:
-			LOGGER.warn("return cache")
-			return self._robot
+			try:
+				status = await asyncio.wait_for(self._robot.get_machine_status(), timeout=10)
+				if len(status.resources) > 0:
+					return self._robot
+				await self._robot.close()
+				self._robot = None
+				LOGGER.warn("setup conn %s no status resources! reconnecting...", self._host)
+			except Exception as exc:
+				await self._robot.close()
+				LOGGER.warn("setup conn %s excepted! %s reconnecting...", self._host, exc)
+				self._robot = None
 		opts = RobotClient.Options.with_api_key(
 			api_key=self._api_key,
 			api_key_id=self._api_key_id
 		)
 		try:
 			LOGGER.warn("attempting connect to host %s", self._host)
-			r =  await RobotClient.at_address( self._host, opts)
+			r =  await asyncio.wait_for(RobotClient.at_address( self._host, opts), timeout=20)
 			self._robot = r
 			LOGGER.warn("got robot")
 			return r
 		except Exception as exc:
-			LOGGER.error("excepted! %s", exc)
-			LOGGER.error(f'The coroutine raised an exception: {exc!r}')
-			print(f'The coroutine raised an exception: {exc!r}')
+			LOGGER.error(f'The coroutine for %s raised an exception: {exc!r}', self._log_name)
 		LOGGER.warn("none after connect")
 		return None
 

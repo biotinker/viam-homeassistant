@@ -12,7 +12,7 @@
   "homekit": {},
   "dependencies": [],
   "integration_type": "hub",
-  "requirements": ["viam-sdk"],
+  "requirements": ["viam-sdk>=0.37.0"],
   "codeowners": [
     "@biotinker"
   ],

@@ -8,12 +8,11 @@ import threading
 # See below for how they are used.
 from homeassistant.components.cover import (
 	ATTR_POSITION,
-	SUPPORT_CLOSE,
-	SUPPORT_OPEN,
-	SUPPORT_STOP,
-	DEVICE_CLASS_WINDOW,
 	CoverEntity,
+	CoverDeviceClass,
+	CoverEntityFeature,
 )
+
 from homeassistant.const import (
     CONF_DEVICE_CLASS,
     CONF_NAME,
@@ -53,12 +52,12 @@ async def async_setup_entry(
 	async_add_entities(ViamCover(hub, motorName) for motorName in motorNames)
 
 class ViamCover(CoverEntity):
-	device_class = DEVICE_CLASS_WINDOW
+	device_class = CoverDeviceClass.WINDOW
 	# The supported features of a cover are done using a bitmask. Using the constants
 	# imported above, we can tell HA the features that are supported by this entity.
 	# If the supported features were dynamic (ie: different depending on the external
 	# device it connected to), then this should be function with an @property decorator.
-	supported_features = SUPPORT_OPEN | SUPPORT_CLOSE | SUPPORT_STOP
+	supported_features = CoverEntityFeature.STOP | CoverEntityFeature.OPEN | CoverEntityFeature.CLOSE
 
 	def __init__(self, hub, motorName) -> None:
 		self._name = motorName
