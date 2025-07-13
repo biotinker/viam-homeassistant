@@ -1,0 +1,12 @@
+{
+  "domain": "viam",
+  "name": "Viam",
+  "config_flow": true,
+  "documentation": "https://github.com/biotinker/viam-homeassistant",
+  "dependencies": [],
+  "codeowners": [],
+  "requirements": ["viam-sdk"],
+  "version": "2.0.0",
+  "iot_class": "local_polling",
+  "integration_type": "device"
+} 

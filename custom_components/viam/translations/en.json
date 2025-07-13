@@ -1,0 +1,51 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "data": {
+          "hostname": "Viam Hostname",
+          "api_key_id": "API Key ID",
+          "api_key": "API Key",
+          "motor_names": "Motor Names (comma-separated)",
+          "open_time": "Open Time (seconds)",
+          "close_time": "Close Time (seconds)",
+          "flip_direction": "Flip Motor Direction",
+          "sensor_update_interval": "Sensor Update Interval (seconds)",
+          "data_api_enabled": "Enable Data API",
+          "data_api_org_id": "Data API Organization ID",
+          "data_api_api_key": "Data API Key",
+          "data_api_sensor_names": "Data API Sensor Names (comma-separated)"
+        },
+        "description": "Enter your Viam server details and configuration.",
+        "title": "Viam Configuration"
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect to Viam server",
+      "invalid_auth": "Invalid authentication credentials",
+      "unknown": "Unexpected error"
+    },
+    "abort": {
+      "already_configured": "Device is already configured"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "motor_names": "Motor Names (comma-separated)",
+          "open_time": "Open Time (seconds)",
+          "close_time": "Close Time (seconds)",
+          "flip_direction": "Flip Motor Direction",
+          "sensor_update_interval": "Sensor Update Interval (seconds)",
+          "data_api_enabled": "Enable Data API",
+          "data_api_org_id": "Data API Organization ID",
+          "data_api_api_key": "Data API Key",
+          "data_api_sensor_names": "Data API Sensor Names (comma-separated)"
+        },
+        "description": "Configure optional settings for Viam.",
+        "title": "Viam Options"
+      }
+    }
+  }
+} 
